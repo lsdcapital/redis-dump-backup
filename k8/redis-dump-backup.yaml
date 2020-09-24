@@ -1,0 +1,61 @@
+apiVersion: v1
+data:
+  redis-dump-backup.conf: |
+    [backup]
+    datadir=./
+    host=redis-leader
+    port=6379
+    method=file
+    test=0
+    loglevel=info
+    logfile=redis-dump-backup.log
+
+    [file]
+    filepath=/tmp
+    filename=redis-dump-backup
+
+    [bucket]
+    filename=redis-dump-backup
+    credspath=./creds.json
+    bucket=lnd-scb-backup
+kind: ConfigMap
+metadata:
+  name: redis-dump-backup-config
+  namespace: stef
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: redis-backup
+spec:
+  schedule: "* */23 * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: redis-backup
+            image: lsdopen/redis-dump-backup:v0.1-alpha
+            command: ['/usr/local/bin/python']
+            args: ['redis-dump-backup.py']
+            #command: ['sleep']
+            #args: ['infinity']
+            volumeMounts:
+            - mountPath: '/app/redis-dump-backup.conf'
+              subPath: "redis-dump-backup.conf"
+              name: redis-dump-backup-config
+            - name: creds-json
+              subPath: "creds.json"
+              mountPath: "/app/creds.json"
+              readOnly: true
+          restartPolicy: OnFailure
+          volumes:
+          - configMap:
+              defaultMode: 0420
+              name: redis-dump-backup-config
+            name: redis-dump-backup-config
+          - name: creds-json
+            secret:
+              secretName: redis-dump-backup
+          
