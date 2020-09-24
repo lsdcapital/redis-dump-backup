@@ -16,10 +16,12 @@ def getConfig(conf='redis-dump-backup.conf', section='backup'):
 
 def dump():
     config = getConfig()
+    host = config['host']
+    port = config['port']
 
     logger.info("Dumping redis rdb")
     if not str2bool(config['test']):
-        subprocess.run(["redis-cli", "-h", config['hostname'], config['port'], "--rdb", "/tmp/redis-dump-backup.rdb"], shell=True, check=True)
+        subprocess.run(["redis-cli", "-h", host, "-p", port, "--rdb", "/tmp/redis-dump-backup.rdb"])
         backup()
     else:
         logger.warning('Running in test mode (test=true) and simulating a redis-dump-backup')
