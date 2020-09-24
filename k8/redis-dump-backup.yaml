@@ -28,7 +28,7 @@ kind: CronJob
 metadata:
   name: redis-backup
 spec:
-  schedule: "* */23 * *"
+  schedule: "* */23 * * *"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
